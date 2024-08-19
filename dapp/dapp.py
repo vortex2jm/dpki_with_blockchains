@@ -9,6 +9,14 @@ rollup_server = environ["ROLLUP_HTTP_SERVER_URL"]
 logger.info(f"HTTP rollup_server url is {rollup_server}")
 
 
+def hex2str(hex):
+    return bytes.fromhex(hex[2:]).decode("utf-8")
+
+
+def str2hex(str):
+    return "0x" + str.encode("utf-8").hex()
+
+
 def handle_advance(data):
     logger.info(f"Received advance request data {data}")
     return "accept"

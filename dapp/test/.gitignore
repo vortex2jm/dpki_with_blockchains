@@ -1,0 +1,6 @@
+.cartesi
+.venv
+msg.txt
+*.bin
+*.b64
+*.pem

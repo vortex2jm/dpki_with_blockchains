@@ -1,79 +1,100 @@
+from lib.database.db_tools import X509Database
+from lib.cert_tools import X509Cert
+from datetime import datetime
 from os import environ
-import logging
 import requests
-import json
-import sqlite3
+import logging
 
+DB_PATH = "certs.db"
 
+#==============================
 logging.basicConfig(level="INFO")
 logger = logging.getLogger(__name__)
-
-
 rollup_server = environ["ROLLUP_HTTP_SERVER_URL"]
 logger.info(f"HTTP rollup_server url is {rollup_server}")
 
 
-#================
+#Encode/Decode================
 def hex2str(hex):
     return bytes.fromhex(hex[2:]).decode("utf-8")
-
 #================
 def str2hex(str):
     return "0x" + str.encode("utf-8").hex()
 
 
-#========================
+#============================ADVANCE========================
 def handle_advance(data):
 
     logger.info(f"Received advance request data {data}")
-    input_data = hex2str(data["payload"])
+    input_data = hex2str(data["payload"]).replace("#", "\n")
     logger.info(f"Received input: {input_data}")
+    logger.info(f"HORÁRIO ATUAL: {datetime.now()}")
 
-    conn = sqlite3.connect("certs.db")
-    cursor = conn.cursor()
-
-    cursor.execute(
-        """
+    try:
+        cert = X509Cert(input_data)
+        db = X509Database(DB_PATH)
         
-        """
-    )
-    conn.commit()
+        if cert.is_valid():
+            db.create_table()
+            issuer = cert.get_issuer()
+            v_dates = cert.get_dates()
+            data = {
+              "id": cert.get_serial(),
+              "raw_cert": input_data,
+              "public_key": cert.get_pubkey(),
+              "country": issuer['C'],
+              "state": issuer['ST'],
+              "locality": issuer['L'],
+              "organization": issuer['O'],
+              "common_name": issuer['CN'],
+              "active": 1,
+              "generation_date": v_dates['not_before'],
+              "expiration_date": v_dates['not_after']
+            }            
+            db.add_cert(tuple(data.values()))
 
-    # json_data = {
-        # "name": input_data
-    # }
+            logger.info(f"Adding notice")
+            response = requests.post(rollup_server + "/notice", json={"payload": str2hex(str("Certificate registered"))})
+            logger.info(f"Received notice status {response.status_code} body {response.content}")
+            return "accept" 
+        
+        raise Exception("The certificate is not valid")
 
-    # with open("/opt/cartesi/dapp/certs.json", "w") as json_file:
-        # json.dump(json_data, json_file, indent=2)
+    except Exception as e:
+        logger.info("Adding report")
+        response = requests.post(rollup_server + "/report", json={"payload": str2hex(str(e))})
+        logger.info(f"Received report status {response.status_code}")
+        return "reject"
 
 
-    logger.info(f"Adding notice with payload: 'user registered'")
-    response = requests.post(rollup_server + "/notice", json={"payload": str2hex(str("Teste123"))})
-    logger.info(f"Received notice status {response.status_code} body {response.content}")
-
-    return "accept"
-
-#========================
+#========================INSPECT============================#
 def handle_inspect(data):
-
-    with open("certs.json", "r") as json_file:
-        loaded_data = json.load(json_file)
-
-    logger.info("Adding report")
-    response = requests.post(rollup_server + "/report", json={"payload": str2hex(str(loaded_data["name"]))})
-    logger.info(f"Received report status {response.status_code}")
-
     logger.info(f"Received inspect request data {data}")
-    return "accept"
+    input_data = hex2str(data["payload"]).replace("#", "\n")
 
+    try:    
+        db = X509Database(DB_PATH)
+        result = dict(zip(X509Database.get_model(), db.query_cert(input_data)))
+        logger.info("Adding report")
+        response = requests.post(rollup_server + "/report", json={"payload": str2hex(str(result))})
+        logger.info(f"Received report status {response.status_code}")
+        return "accept"
+    except Exception as e:
+        logger.info("Adding report")
+        response = requests.post(rollup_server + "/report", json={"payload": str2hex(str(e))})
+        logger.info(f"Received report status {response.status_code}")
+        return "reject"
+    
 
+#=================================
 handlers = {
     "advance_state": handle_advance,
     "inspect_state": handle_inspect,
 }
-
 finish = {"status": "accept"}
 
+
+# MAIN LOOP=======================
 while True:
     logger.info("Sending finish")
     response = requests.post(rollup_server + "/finish", json=finish)

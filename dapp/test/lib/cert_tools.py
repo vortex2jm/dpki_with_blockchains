@@ -2,17 +2,19 @@ from datetime import datetime
 from os import system
 import subprocess
 
+BASE_PATH = "./tmp/"
+
 class X509Cert():
-  __MSG_PATH = "msg.txt"
-  __PUBKEY_PATH = "public_key.pem"
-  __SIGNATURE_B64PATH = "signature.b64"
-  __SIGNATURE_BINPATH = "signature.bin"
+  __MSG_PATH = f"{BASE_PATH}msg.txt"
+  __PUBKEY_PATH = f"{BASE_PATH}public_key.pem"
+  __SIGNATURE_B64PATH = f"{BASE_PATH}signature.b64"
+  __SIGNATURE_BINPATH = f"{BASE_PATH}signature.bin"
   __DECODE_COMMAND = f"base64 -d {__SIGNATURE_B64PATH} > {__SIGNATURE_BINPATH}"
-  __CHECK_SIGN_COMMAND = f"openssl dgst -sha256 -verify public_key.pem -signature {__SIGNATURE_BINPATH} {__MSG_PATH}"
+  __CHECK_SIGN_COMMAND = f"openssl dgst -sha256 -verify {__PUBKEY_PATH} -signature {__SIGNATURE_BINPATH} {__MSG_PATH}"
 
   def __init__(self, cert: str) -> None:
     self.__certificate = cert
-    self.__CERT_PATH = "certificate.pem"
+    self.__CERT_PATH = f"{BASE_PATH}certificate.pem"
     self.__DATES_COMMAND = f"openssl x509 -in {self.__CERT_PATH} -noout -dates"
     self.__SERIAL_COMMAND = f"openssl x509 -in {self.__CERT_PATH} -noout -serial"
     self.__PUBKEY_COMMAND = f"openssl x509 -in {self.__CERT_PATH} -noout -pubkey"

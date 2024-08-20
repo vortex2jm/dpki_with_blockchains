@@ -79,9 +79,14 @@ class X509Database():
       results = conn.cursor()\
         .execute(self.__get_script(self.__QUERY_PATH), (pub_key,))\
         .fetchone()
-      
+    
       conn.close()
+      
+      if not results:
+        raise Exception("This public key does not exists")
+
       return results
+    
     except Exception as e:
       raise Exception(f"Query error\n{e}")
 

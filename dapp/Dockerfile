@@ -14,14 +14,20 @@ RUN <<EOF
 set -e
 apt-get update
 apt-get install -y --no-install-recommends \
-  busybox-static=1:1.30.1-7ubuntu3
+  busybox-static=1:1.30.1-7ubuntu3 \
+  libsqlite3-dev \
+  sudo
 rm -rf /var/lib/apt/lists/* /var/log/* /var/cache/*
 useradd --create-home --user-group dapp
+echo "dapp ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 EOF
 
 ENV PATH="/opt/cartesi/bin:${PATH}"
 
 WORKDIR /opt/cartesi/dapp
+
+RUN chown -R dapp:dapp /opt/cartesi/dapp
+
 COPY ./requirements.txt .
 
 RUN <<EOF
@@ -30,9 +36,13 @@ pip install -r requirements.txt --no-cache
 find /usr/local/lib -type d -name __pycache__ -exec rm -r {} +
 EOF
 
-COPY ./dapp.py .
+COPY . . 
+
+RUN chmod 777 ./certs.db 
+RUN chmod 777 ./tmp/*
+RUN chmod 777 ./lib/database/scripts/*
 
 ENV ROLLUP_HTTP_SERVER_URL="http://127.0.0.1:5004"
 
 ENTRYPOINT ["rollup-init"]
-CMD ["python3", "dapp.py"]
+CMD ["python3", "dapp.py", "&&", "python3", "update_time.py"]

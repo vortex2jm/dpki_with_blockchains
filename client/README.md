@@ -32,7 +32,8 @@ Generating the self-signed certificate
 openssl req -x509 -new -key private_key.pem -out certificate.pem -days 365 -subj "/C=BR/ST=São Paulo/L=São Paulo/O=Minha Empresa/CN=meuexemplo.com"
 ```
 
-> [!Remember to update the information]
+> [!NOTE] 
+> Remember to update the following fields
 > - C=BR (Country).
 > - ST=São Paulo (State).
 > - L=São Paulo (Locality).

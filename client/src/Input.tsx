@@ -2,7 +2,9 @@ import React, { useState } from "react";
 import { ethers } from "ethers";
 import { useRollups } from "./useRollups";
 import { useWallets } from "@web3-onboard/react";
-import "./style.css"; 
+import styles from "./styles/Input.module.css"
+// import "./style.css"; 
+
 
 interface IInputPropos {
     dappAddress: string;
@@ -69,16 +71,16 @@ export const Input: React.FC<IInputPropos> = (propos) => {
     };
 
     return (
-        <div className="container">
-            <div className="section">
+        <div className={styles.container}>
+            <div className={styles.section}>
                 <h3>Send Input</h3>
 
-                <label className="checkboxLabel">
+                <label className={styles.checkboxLabel}>
                     <input
                         type="checkbox"
                         checked={Flag_revoke === 1}
                         onChange={(e) => setFlagRevoke(e.target.checked ? 1 : 0)}
-                        className="checkbox"
+                        className={styles.checkbox}
                     />
                     Revoke
                 </label>
@@ -89,21 +91,21 @@ export const Input: React.FC<IInputPropos> = (propos) => {
                             type="file"
                             accept=".pem"
                             onChange={(e) => handleFileUpload(e, setPublicKeyContent)}
-                            className="fileInput"
+                            className={styles.fileInput}
                             placeholder="Public Key"
                         />
                         <input
                             type="file"
                             accept=".txt,.pem"
                             onChange={(e) => handleFileUpload(e, setMessageContent)}
-                            className="fileInput"
+                            className={styles.fileInput}
                             placeholder="Message"
                         />
                         <input
                             type="file"
                             accept=".txt,.pem,.b64"
                             onChange={(e) => handleFileUpload(e, setSignedMessageContent)}
-                            className="fileInput"
+                            className={styles.fileInput}
                             placeholder="Signed Message"
                         />
                     </>
@@ -112,11 +114,11 @@ export const Input: React.FC<IInputPropos> = (propos) => {
                         type="file"
                         accept=".pem"
                         onChange={(e) => handleFileUpload(e, setFileContent)}
-                        className="fileInput"
+                        className={styles.fileInput}
                     />
                 )}
 
-                <button onClick={handleSend} disabled={!rollups} className="button">
+                <button onClick={handleSend} disabled={!rollups} className={styles.button}>
                     Send
                 </button>
             </div>

@@ -155,6 +155,7 @@ textarea {
 
 .inspect-metadata, .inspect-reports {
     margin-top: 20px;
+    max-width: 100vw;
 }
 
 .inspect-table {

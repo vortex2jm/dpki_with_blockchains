@@ -20,7 +20,6 @@ import { Notices } from "./Notices";
 import { Input } from "./Input";
 import { Inspect } from "./Inspect";
 import { Network } from "./Network";
-import { Vouchers } from "./Vouchers";
 import { Reports } from "./Reports";
 import configFile from "./config.json";
 import './style.css';
@@ -65,10 +64,10 @@ const App: FC = () => {
                             <h2>Input</h2>
                             <Input dappAddress={dappAddress} />
                         </div>
-                        {/* <div className="dapp-component">
+                        <div className="dapp-component">
                             <h2>Reports</h2>
                             <Reports />
-                        </div>*/}
+                        </div>
                         <div className="dapp-component">
                             <h2>Notices</h2>
                             <Notices />

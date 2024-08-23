@@ -57,7 +57,7 @@ export const Inspect: React.FC = () => {
     } catch (error) {
       console.error("Error fetching reports:", error);
       setShowReport(false);
-      alert("oi"); // DEBUG
+      alert("Erro de requisição. Confira o arquivo com a chave pública."); // DEBUG
     }
   };
 

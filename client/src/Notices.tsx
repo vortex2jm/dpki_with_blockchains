@@ -1,7 +1,5 @@
-// Este arquivo contem o componente Notices que exibe uma tabela de notificacoes
-
 import { ethers } from "ethers";
-import React from "react";
+import React, { useEffect } from "react";
 import { useNoticesQuery } from "./generated/graphql";
 import styles from "./styles/Notices.module.css";
 
@@ -12,12 +10,23 @@ type Notice = {
     payload: string;
 };
 
+// Este arquivo contém o componente Notices que exibe uma tabela de notificações
 export const Notices: React.FC = () => {
     // Executa a consulta GraphQL para obter os notices
     const [result, reexecuteQuery] = useNoticesQuery();
     const { data, fetching, error } = result;
 
-    // Exibe mensagens de carregamento, erro, ou ausencia de dados
+    // Atualiza os notices a cada 5 segundos
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            reexecuteQuery({ requestPolicy: "network-only" });
+        }, 5000);
+
+        // Limpa o intervalo quando o componente é desmontado
+        return () => clearInterval(intervalId);
+    }, [reexecuteQuery]);
+
+    // Exibe mensagens de carregamento, erro, ou ausência de dados
     if (fetching) return <p className={styles.loading}>Loading...</p>;
     if (error) return <p className={styles.error}>Oh no... {error.message}</p>;
     if (!data || !data.notices) return <p className={styles.noNotices}>No notices</p>;
@@ -30,7 +39,7 @@ export const Notices: React.FC = () => {
             try {
                 inputPayload = ethers.utils.toUtf8String(inputPayload); // Converte o payload do input para string
             } catch (e) {
-                inputPayload = inputPayload + " (hex)";  // Se a conversao falhar, mantem em hexadecimal
+                inputPayload = inputPayload + " (hex)";  // Se a conversão falhar, mantém em hexadecimal
             }
         } else {
             inputPayload = "(empty)"; // Marca como vazio se não houver payload
@@ -40,10 +49,10 @@ export const Notices: React.FC = () => {
             try {
                 payload = ethers.utils.toUtf8String(payload); // Converte o payload para string
             } catch (e) {
-                payload = payload + " (hex)"; //Se nao conseguir, matem em hexadecimal
+                payload = payload + " (hex)"; // Se não conseguir, mantém em hexadecimal
             }
         } else {
-            payload = "(empty)"; //Ou como vazio
+            payload = "(empty)"; // Ou como vazio
         }
         return {
             id: `${n?.id}`,
@@ -51,7 +60,7 @@ export const Notices: React.FC = () => {
             payload: `${payload}`, // Armazena o payload processado
             input: n ? { index: n.input.index, payload: inputPayload } : {}, // Armazena o input e seu payload processado
         };
-    }).sort((b: any, a: any) => { // Ordena os notices por indice de input e de notice
+    }).sort((b: any, a: any) => { // Ordena os notices por índice de input e de notice
         if (a.input.index === b.input.index) {
             return b.index - a.index;
         } else {

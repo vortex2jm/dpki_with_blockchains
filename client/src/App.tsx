@@ -24,11 +24,12 @@ import { Reports } from "./Reports";
 import configFile from "./config.json";
 import './style.css';
 
-const config: any = configFile;
+const config: any = configFile; // Carrega as configurações de blockchain a partir do arquivo JSON.
 
+// Inicializa o módulo de carteiras injetadas.
 const injected: any = injectedModule();
 init({
-    wallets: [injected],
+    wallets: [injected], // Define as carteiras que podem ser usadas na DApp
     chains: Object.entries(config).map(([k, v]: [string, any], i) => ({id: k, token: v.token, label: v.label, rpcUrl: v.rpcUrl})),
     appMetadata: {
         name: "Cartesi Rollups Test DApp",
@@ -41,6 +42,7 @@ init({
 });
 
 const App: FC = () => {
+    // Estado que armazena o endereço da DApp, com valor inicial definido.
     const [dappAddress, setDappAddress] = useState<string>("0xab7528bb862fb57e8a2bcd567a2e929a0be56a5e");
 
     return (

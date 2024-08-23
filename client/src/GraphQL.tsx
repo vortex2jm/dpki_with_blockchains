@@ -18,14 +18,18 @@ import configFile from "./config.json";
 
 const config: any = configFile;
 
+// Hook personalizado que configura e retorna o cliente GraphQL com base na cadeia conectada
 const useGraphQL = () => {
     const [{ connectedChain }] = useSetChain();
+
+    // useMemo é usado para memorizar o cliente GraphQL, evitando recriação desnecessária
     return useMemo<Client | null>(() => {
         if (!connectedChain) {
             return null;
         }
         let url = "";
 
+        // Define o URL da API GraphQL com base na configuração da cadeia conectada
         if(config[connectedChain.id]?.graphqlAPIURL) {
             url = `${config[connectedChain.id].graphqlAPIURL}/graphql`;
         } else {
@@ -38,15 +42,17 @@ const useGraphQL = () => {
         }
 
         return createClient({ url });
-    }, [connectedChain]);
+    }, [connectedChain]); // O cliente é reconfigurado apenas quando a cadeia conectada muda
 };
 
+// Componente que fornece o cliente GraphQL para os componentes filhos da DApp
 export const GraphQLProvider: any = (props: any) => {
     const client = useGraphQL();
     if (!client) {
         return <div />;
     }
     
+    // Se o cliente GraphQL está disponível, envolve os filhos com o Provider, permitindo que eles façam consultas e mutações GraphQL
     return <Provider value={client}>{props.children}</Provider>;
 };
 

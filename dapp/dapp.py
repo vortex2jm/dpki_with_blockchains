@@ -119,15 +119,15 @@ finish = {"status": "accept"}
 
 
 # Updating time==================
-date_str = "20 AUG 2024 12:00:00"
+date_str = "20 JAN 2025 12:00:00"
 try:
     subprocess.run(['sudo', 'date', '-s', date_str], check=True)
-    print(f"Data e hora ajustadas para: {date_str}")
+    print(f"Adjusting datetime: {date_str}")
 except subprocess.CalledProcessError as e:
-    print(f"Erro ao ajustar a data e hora: {e}")
+    print(f"Datetime updating error: {e}")
 
 result = subprocess.run(['date'], capture_output=True, text=True).stdout.strip()
-print(f"HORARIO ATUAL DO SISTEMA: {result}")
+print(f"Current system time: {result}")
 #==============================================================================
 
 

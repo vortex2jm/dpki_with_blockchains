@@ -5,6 +5,7 @@ from os import environ
 import requests
 import logging
 import subprocess
+import json
 
 DB_PATH = "certs.db"
 
@@ -30,42 +31,67 @@ def handle_advance(data):
     input_data = hex2str(data["payload"]).replace("$", "\n")
     logger.info(f"Received input: {input_data}")
     logger.info(f"HORÁRIO ATUAL: {datetime.now()}")
+    
+    data = json.loads(input_data)
 
-    try:
-        cert = X509Cert(input_data)
-        db = X509Database(DB_PATH)
-        
-        if cert.is_valid():
-            db.create_table()
-            issuer = cert.get_issuer()
-            v_dates = cert.get_dates()
-            data = {
-              "id": cert.get_serial(),
-              "raw_cert": input_data,
-              "public_key": cert.get_pubkey(),
-              "country": issuer['C'],
-              "state": issuer['ST'],
-              "locality": issuer['L'],
-              "organization": issuer['O'],
-              "common_name": issuer['CN'],
-              "active": 1,
-              "generation_date": v_dates['not_before'],
-              "expiration_date": v_dates['not_after']
-            }            
-            db.add_cert(tuple(data.values()))
+    if data['fl_revoke'] == 0:
+        try:
+            cert = X509Cert(data['cert'])
+            db = X509Database(DB_PATH)
+            
+            if cert.is_valid():
+                db.create_table()
+                issuer = cert.get_issuer()
+                v_dates = cert.get_dates()
+                data = {
+                "id": cert.get_serial(),
+                "raw_cert": data['cert'],
+                "public_key": cert.get_pubkey(),
+                "country": issuer['C'],
+                "state": issuer['ST'],
+                "locality": issuer['L'],
+                "organization": issuer['O'],
+                "common_name": issuer['CN'],
+                "active": 1,
+                "generation_date": v_dates['not_before'],
+                "expiration_date": v_dates['not_after']
+                }            
+                db.add_cert(tuple(data.values()))
 
-            logger.info(f"Adding notice")
-            response = requests.post(rollup_server + "/notice", json={"payload": str2hex(str("Certificate registered"))})
-            logger.info(f"Received notice status {response.status_code} body {response.content}")
-            return "accept" 
-        
-        raise Exception("The certificate is not valid")
+                logger.info(f"Adding notice")
+                response = requests.post(rollup_server + "/notice", json={"payload": str2hex(str("Certificate registered"))})
+                logger.info(f"Received notice status {response.status_code} body {response.content}")
+                return "accept" 
+            
+            raise Exception("The certificate is not valid")
 
-    except Exception as e:
-        logger.info("Adding report")
-        response = requests.post(rollup_server + "/report", json={"payload": str2hex(str(e))})
-        logger.info(f"Received report status {response.status_code}")
-        return "reject"
+        except Exception as e:
+            logger.info("Adding report")
+            response = requests.post(rollup_server + "/report", json={"payload": str2hex(str(e))})
+            logger.info(f"Received report status {response.status_code}")
+            return "reject"
+    else:
+        try:
+            db = X509Database(DB_PATH)
+            
+            cert = db.query_cert(data['public_key'])
+            cert = X509Cert(cert[1])
+            
+            if cert.check_sign(data['message'], data['signed_message'], data['public_key']):
+                db.revoke_cert(data['public_key'])
+            else:
+                raise Exception("A mensagem assinada não corresponde à mensagem original")
+
+            logger.info("Certificado revogado com sucesso")
+            response = requests.post(rollup_server + "/notice", json={"payload": str2hex(str("Certificate revoked"))})
+            logger.info(f"Received notice status {response.status_code}")
+            return "accept"                
+
+        except Exception as e:
+            logger.info("Adding report")
+            response = requests.post(rollup_server + "/report", json={"payload": str2hex(str(e))})
+            logger.info(f"Received report status {response.status_code}")
+            return "reject"
 
 
 #========================INSPECT============================#

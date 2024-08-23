@@ -71,21 +71,17 @@ def handle_advance(data):
             logger.info(f"Received report status {response.status_code}")
             return "reject"
     else:
-        try:
-            db = X509Database(DB_PATH)
-            
-            cert = db.query_cert(data['public_key'])
-            cert = X509Cert(cert[1])
-            
-            if cert.check_sign(data['message'], data['signed_message'], data['public_key']):
+        try:            
+            if X509Cert.check_sign(data['message'], data['signed_message'], data['public_key']):
+                db = X509Database(DB_PATH)
                 db.revoke_cert(data['public_key'])
+                
+                logger.info("Certificado revogado com sucesso")
+                response = requests.post(rollup_server + "/notice", json={"payload": str2hex(str("Certificate revoked"))})
+                logger.info(f"Received notice status {response.status_code}")
+                return "accept"
             else:
-                raise Exception("A mensagem assinada não corresponde à mensagem original")
-
-            logger.info("Certificado revogado com sucesso")
-            response = requests.post(rollup_server + "/notice", json={"payload": str2hex(str("Certificate revoked"))})
-            logger.info(f"Received notice status {response.status_code}")
-            return "accept"                
+                raise Exception("A mensagem assinada não corresponde à mensagem original")                          
 
         except Exception as e:
             logger.info("Adding report")

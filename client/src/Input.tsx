@@ -25,7 +25,8 @@ export const Input: React.FC<IInputPropos> = (propos) => {
         if (rollups) {
             try {
                 let payload = ethers.utils.toUtf8Bytes(str);
-                await rollups.inputContract.addInput(propos.dappAddress, payload);
+                const result = await rollups.inputContract.addInput(propos.dappAddress, payload);
+                console.log("Result input", result)
             } catch (e) {
                 console.log(`${e}`);
             }
@@ -54,11 +55,14 @@ export const Input: React.FC<IInputPropos> = (propos) => {
                 fl_revoke: Flag_revoke,
                 cert: fileContent,
                 public_key: Flag_revoke === 1 ? publicKeyContent : null,
-                message: Flag_revoke === 1 ? messageContent : null,
+                message: Flag_revoke === 1 ? messageContent == null ? null : messageContent.replace("\n", "") : null,
                 signed_message: Flag_revoke === 1 ? signedMessageContent : null,
             };
+
             console.log("Data:",JSON.stringify(data));
-            await addInput(JSON.stringify(data).replace(/\n/g, "$"));
+
+            const result = await addInput(JSON.stringify(data).replace(/\n/g, "$"));
+            console.log("Result from addInput:", result);
         } else {
             console.log("Nenhum conteúdo de arquivo para enviar");
         }
@@ -97,7 +101,7 @@ export const Input: React.FC<IInputPropos> = (propos) => {
                         />
                         <input
                             type="file"
-                            accept=".txt,.pem"
+                            accept=".txt,.pem,.b64"
                             onChange={(e) => handleFileUpload(e, setSignedMessageContent)}
                             className="fileInput"
                             placeholder="Signed Message"

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useSetChain } from "@web3-onboard/react";
 import { ethers } from "ethers";
 import configFile from "./config.json";
+import axios from 'axios';
 
 const config: any = configFile;
 
@@ -37,6 +38,8 @@ export const Inspect: React.FC = () => {
         try {
             const fetchData = await fetch(`${apiURL}/${payload}`);
             const data = await fetchData.json();
+            // const fetchData = await axios.get(`${apiURL}/${payload}`);
+            // const data = await fetchData.data.json();
 
             setReports(data.reports);
             setMetadata({

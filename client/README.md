@@ -84,3 +84,11 @@ Running
 ```shell
 yarn start
 ```
+
+### Remarks
+> [!NOTE]
+> To use the client, you need to install the MetaMask wallet for Chrome and add the test account with the mnemonic: **test test test test test test test test test test test junk**.
+> Once connected, manually add the local network:
+>  - New RPC URL: http://localhost:8545
+>  - Chain ID: 31337
+>  - Currency symbol: ETH

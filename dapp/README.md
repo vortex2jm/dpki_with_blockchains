@@ -28,6 +28,8 @@ Runnning:
 cartesi run
 ```
 
+### Optional and Utilities
+
 Checking logs
 ```shell
 cartesi run --verbose
@@ -49,14 +51,3 @@ Changing the machine's memory
 ```dockerfile
 LABEL io.cartesi.rollups.ram_size=128Mi
 ```
-
-### Remark
-The dapp's backend receives a specific format of certificates and public keys. In the client, you must replace some characters to ensure that the content will be processed correctly.
-
-**Certificates**
- - Replace "\n" with "$".
- 
-**Public Keys**
- - Replace "\n" with "$".
- - Replace " " with "~".
- - Replace "/" with "!".

@@ -1,103 +1,114 @@
-// Copyright 2022 Cartesi Pte. Ltd.
-
-// Licensed under the Apache License, Version 2.0 (the "License"); you may not
-// use this file except in compliance with the License. You may obtain a copy
-// of the license at http://www.apache.org/licenses/LICENSE-2.0
-
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-// License for the specific language governing permissions and limitations
-// under the License.
-
+import React, { useEffect } from "react";
 import { ethers } from "ethers";
-import React from "react";
 import { useReportsQuery } from "./generated/graphql";
+import styles from "./styles/Reports.module.css";
 
 type Report = {
-    id: string;
-    index: number;
-    input: any, //{index: number; epoch: {index: number; }
-    payload: string;
+  id: string;
+  index: number;
+  input: any;
+  payload: string;
 };
 
+// Executa a consulta GraphQL para obter os reports
 export const Reports: React.FC = () => {
-    const [result,reexecuteQuery] = useReportsQuery();
-    const { data, fetching, error } = result;
+  const [result, reexecuteQuery] = useReportsQuery();
+  const { data, fetching, error } = result;
 
-    if (fetching) return <p>Loading...</p>;
-    if (error) return <p>Oh no... {error.message}</p>;
+  // Atualiza os relatórios a cada 5 segundos
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      reexecuteQuery({ requestPolicy: "network-only" });
+    }, 5000);
 
-    if (!data || !data.reports) return <p>No reports</p>;
+    // Limpa o intervalo quando o componente é desmontado
+    return () => clearInterval(intervalId);
+  }, [reexecuteQuery]);
 
-    const reports: Report[] = data.reports.edges.map((node: any) => {
-        const n = node.node;
-        let inputPayload = n?.input.payload;
-        if (inputPayload) {
-            try {
-                inputPayload = ethers.utils.toUtf8String(inputPayload);
-            } catch (e) {
-                inputPayload = inputPayload + " (hex)";
-            }
-        } else {
-            inputPayload = "(empty)";
+  // Exibe mensagens de carregamento, erro, ou ausência de dados
+  if (fetching) return <p className={styles.loading}>Loading...</p>;
+  if (error) return <p className={styles.error}>Oh no... {error.message}</p>;
+
+  if (!data || !data.reports)
+    return <p className={styles.noReports}>No reports</p>;
+
+  // Processa os dados obtidos da consulta
+  const reports: Report[] = data.reports.edges
+    .map((node: any) => {
+      const n = node.node;
+      let inputPayload = n?.input.payload;
+      if (inputPayload) {
+        try {
+          inputPayload = ethers.utils.toUtf8String(inputPayload); // Converte o input do Payload para string UTF-8
+        } catch (e) {
+          inputPayload = inputPayload + " (hex)"; // Se a conversão falhar, mantém o payload em hexadecimal
         }
-        let payload = n?.payload;
-        if (payload) {
-            try {
-                payload = ethers.utils.toUtf8String(payload);
-            } catch (e) {
-                payload = payload + " (hex)";
-            }
-        } else {
-            payload = "(empty)";
+      } else {
+        inputPayload = "(empty)"; // Marca como vazio se não houver input
+      }
+      let payload = n?.payload;
+      if (payload) {
+        try {
+          payload = ethers.utils.toUtf8String(payload);
+        } catch (e) {
+          payload = payload + " (hex)";
         }
-        return {
-            id: `${n?.id}`,
-            index: parseInt(n?.index),
-            payload: `${payload}`,
-            input: n ? {index:n.input.index,payload: inputPayload} : {},
-        };
-    }).sort((b: any, a: any) => {
-        if (a.input.index === b.input.index) {
-            return b.index - a.index;
-        } else {
-            return b.input.index - a.input.index;
-        }
+      } else {
+        payload = "(empty)";
+      }
+      return {
+        id: `${n?.id}`,
+        index: parseInt(n?.index),
+        payload: `${payload}`,
+        input: n ? { index: n.input.index, payload: inputPayload } : {},
+      };
+    })
+    .sort((b: any, a: any) => { // Ordena os reports por índice de input e de report
+      if (a.input.index === b.input.index) {
+        return b.index - a.index;
+      } else {
+        return b.input.index - a.input.index;
+      }
     });
 
-    // const forceUpdate = useForceUpdate();
-    return (
-        <div>
-            <button onClick={() => reexecuteQuery({ requestPolicy: 'network-only' })}>
-                Reload
-            </button>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Input Index</th>
-                        <th>Notice Index</th>
-                        {/* <th>Input Payload</th> */}
-                        <th>Payload</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {reports.length === 0 && (
-                        <tr>
-                            <td colSpan={4}>no reports</td>
-                        </tr>
-                    )}
-                    {reports.map((n: any) => (
-                        <tr key={`${n.input.index}-${n.index}`}>
-                            <td>{n.input.index}</td>
-                            <td>{n.index}</td>
-                            {/* <td>{n.input.payload}</td> */}
-                            <td>{n.payload}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-
-        </div>
-    );
+  return (
+    <div className={styles.container}>
+      <div className={styles.section}>
+        <button
+          onClick={() => reexecuteQuery({ requestPolicy: "network-only" })}
+          className={styles.button}
+        >
+          Reload
+        </button>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th className={styles.tableHeader}>Input Index</th>
+              <th className={styles.tableHeader}>Notice Index</th>
+              <th className={styles.tableHeader}>Payload</th>
+            </tr>
+          </thead>
+          <tbody>
+            {reports.length === 0 && (
+              <tr>
+                <td colSpan={3} className={styles.noReportsRow}>
+                  No reports
+                </td>
+              </tr>
+            )}
+            {reports.map((n: any) => (
+              <tr
+                key={`${n.input.index}-${n.index}`}
+                className={styles.tableRow}
+              >
+                <td className={styles.tableCell}>{n.input.index}</td>
+                <td className={styles.tableCell}>{n.index}</td>
+                <td className={styles.tableCell}>{n.payload}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 };

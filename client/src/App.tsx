@@ -20,15 +20,16 @@ import { Notices } from "./Notices";
 import { Input } from "./Input";
 import { Inspect } from "./Inspect";
 import { Network } from "./Network";
-import { Vouchers } from "./Vouchers";
 import { Reports } from "./Reports";
 import configFile from "./config.json";
+import './style.css';
 
-const config: any = configFile;
+const config: any = configFile; // Carrega as configurações de blockchain a partir do arquivo JSON.
 
+// Inicializa o módulo de carteiras injetadas.
 const injected: any = injectedModule();
 init({
-    wallets: [injected],
+    wallets: [injected], // Define as carteiras que podem ser usadas na DApp
     chains: Object.entries(config).map(([k, v]: [string, any], i) => ({id: k, token: v.token, label: v.label, rpcUrl: v.rpcUrl})),
     appMetadata: {
         name: "Cartesi Rollups Test DApp",
@@ -41,30 +42,40 @@ init({
 });
 
 const App: FC = () => {
-    const [dappAddress, setDappAddress] = useState<string>("0x70ac08179605AF2D9e75782b8DEcDD3c22aA4D0C");
+    // Estado que armazena o endereço da DApp, com valor inicial definido.
+    const [dappAddress, setDappAddress] = useState<string>("0xab7528bb862fb57e8a2bcd567a2e929a0be56a5e");
 
     return (
         <div>
             <Network />
             <GraphQLProvider>
-                <div>
-                    Dapp Address: <input
-                        type="text"
-                        value={dappAddress}
-                        onChange={(e) => setDappAddress(e.target.value)}
-                    />
-                    <br /><br />
+                <div className="dapp-container">
+                    <div className="dapp-header">
+                        Dapp Address: <input
+                            type="text"
+                            value={dappAddress}
+                            onChange={(e) => setDappAddress(e.target.value)}
+                        />
+                    </div>
+                    <div className="dapp-components">
+                        <div className="dapp-component">
+                            <h2>Inspect</h2>
+                            <Inspect />
+                        </div>
+                        <div className="dapp-component">
+                            <h2>Input</h2>
+                            <Input dappAddress={dappAddress} />
+                        </div>
+                        <div className="dapp-component">
+                            <h2>Reports</h2>
+                            <Reports />
+                        </div>
+                        <div className="dapp-component">
+                            <h2>Notices</h2>
+                            <Notices />
+                        </div> 
+                    </div>
                 </div>
-                <h2>Inspect</h2>
-                <Inspect />
-                <h2>Input</h2>
-                <Input dappAddress={dappAddress} />
-                <h2>Reports</h2>
-                <Reports />
-                <h2>Notices</h2>
-                <Notices />
-                <h2>Vouchers</h2>
-                <Vouchers dappAddress={dappAddress} />
             </GraphQLProvider>
         </div>
     );

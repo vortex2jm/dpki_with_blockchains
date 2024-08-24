@@ -57,7 +57,7 @@ Checking the certificate
 openssl x509 -in certificate.pem -text -noout
 ```
 
-Signing a message (save the message into a .txt file)
+Signing a message (save the message into a .txt file before running this command)
 ```shell
 openssl dgst -sha256 -sign private_key.pem -out signature.bin message.txt
 ```
